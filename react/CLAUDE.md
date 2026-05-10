@@ -1,4 +1,4 @@
-# React Project — Architecture Reference (v2)
+# React Project — Architecture Reference (v2.1)
 
 This file is the source of truth for patterns used in this project.
 Read it before touching any file in `react/`.
@@ -7,6 +7,14 @@ Read it before touching any file in `react/`.
 > SubtopicMarquee infinite-scroll have been removed. The new structural
 > piece is `ChapterColumn` — a single internally-scrollable list that
 > drives the entire layout. See § ChapterColumn focus crossfade below.
+>
+> **v2.1 mobile + modal pass.** Mobile (<1024px) reflows into a 50/50
+> two-column hero (TopicTitle list on the left, ChapterColumn on the
+> right) with a horizontal footer. The About and Contact modals slide
+> up from the bottom and use an explicit `Close ×` button (mobile shows
+> just `×`); click-to-close has been removed. The chapter wheel was
+> bumped from 3 → 5 stacked list copies with canonical range `[h, 3h]`
+> so mobile viewports get scroll runway in both directions.
 
 ## Stack
 - React 18 + Vite 5
@@ -124,8 +132,41 @@ Desktop layout (>= 1024px):
 The hero pair gap (`--hero-pair-gap: 24px`) and rail offsets
 (`--page-margin-rail-x: 5%`, `--page-margin-rail-y: 6%`) are all tokens.
 
-Mobile (< 1024px) reflows to a stacked single-column grid (unchanged from
-v2 first pass).
+Mobile (< 1024px) layout — v2.1 reflow:
+
+```css
+.home {
+  display: grid;
+  grid-template-columns: 1fr 1fr;     /* 50/50 hero */
+  grid-template-rows: 1fr auto;
+  grid-template-areas:
+    "title chapters"
+    "footer footer";
+  height: 100vh;
+  padding: var(--page-margin-mobile);
+  overflow: hidden;
+}
+.home__top-left { display: none; }   /* TopicGroupRail hidden on mobile */
+.home__title    { grid-area: title; justify-content: flex-end; text-align: right; }
+.home__chapters { grid-area: chapters; overflow: hidden; }
+.home__bottom-left {
+  grid-area: footer;
+  display: flex;
+  justify-content: space-between;     /* About+, Contact+, year */
+}
+```
+
+The wordmark stays absolute-top-center on both breakpoints. The year
+appears top-right on desktop (`.home__year`) and inside the bottom
+footer on mobile (`.home__bottom-year`); each is hidden at the wrong
+breakpoint via CSS.
+
+`TopicTitle` is dual-mode. Desktop: single `<span class="topic-title__long">`
+on one line. Mobile: a `<ul class="topic-title__list">` of every topic
+group's `titleShort` (falling back to `title`), the active one in
+`--color-ink`, the rest in `--color-ghost`. Items default to
+`white-space: nowrap`; the JSX adds `--multiline` (which sets
+`white-space: normal`) only when the label has more than 2 words.
 
 ### Reduced motion
 - `useReducedMotion` is called once in `App.jsx`. It sets
@@ -154,26 +195,31 @@ v2 first pass).
 
 The defining motion of the site. Implementation:
 
-1. Container is a flex column with two 50%-height spacers wrapping a
-   `.chapter-column__lists` wrapper. Inside that wrapper are **TWO
-   identical `<ul>` copies of the chapter list**, stacked vertically. The
-   duplicate enables seamless wrap when scroll position reaches the
-   bottom of copy 0 — we instantly subtract one copy-height from
-   scrollTop to land at the equivalent position in copy 0 (the visual is
-   pixel-identical, so the user never sees the snap).
+1. Container holds a `.chapter-column__lists` flex wrapper containing
+   **FIVE identical `<ul>` copies** of the chapter list, stacked
+   vertically. The canonical scroll position lives in **copy 2** (the
+   middle copy). `scrollTopForIndex(i)` returns `2 * copyHeight + offset
+   of chapter i within one copy` — so the user always has roughly `2h`
+   of scroll runway in both directions before reaching the native scroll
+   limit. (v2 used 3 copies and canonical `[0, copyHeight)`; on short
+   mobile viewports that left the user stuck at scrollTop=0 with no
+   upward scroll room, and the down-wrap was unreachable.)
 2. On every scroll event, an rAF-throttled callback:
-   a. Runs `wrapScrollIfNeeded()` — if scrollTop has crossed into copy 1's
-      half of the wrapper (scrollTop >= 2 * copyHeight) or gone negative,
-      it adds/subtracts one copyHeight to bring scrollTop back into the
-      canonical [0, copyHeight) range.
-   b. Reads each chapter row's `getBoundingClientRect()` (across both
-      copies) and computes the absolute distance from the container's
+   a. Runs `wrapScrollIfNeeded()` — if `scrollTop >= 3h` it subtracts
+      one copyHeight (back into copy 2's range); if `scrollTop < h` it
+      adds one copyHeight. Canonical range is `[h, 3h]`. Wraps are
+      invisible because all five copies are pixel-identical.
+   b. Reads each chapter row's `getBoundingClientRect()` (across every
+      copy) and computes the absolute distance from the container's
       vertical center.
 3. Distance is normalized over `--focus-line-fade-distance` (≈140px) and
    used to lerp the chapter's text color from `--color-ink` (#111111) to
    `--color-ghost` (#C7C7C7) via inline `style.color = 'rgb(r,g,b)'`.
-4. Copy 0 is the "canonical" copy for ARIA — its row indices drive
-   `activeIndex` and `aria-activedescendant`. Copy 1 is `aria-hidden`.
+4. Copy 0 is the ARIA-visible copy (carries `id`, `role="option"`,
+   `aria-selected`); copies 1–4 are `aria-hidden`. `activeIndex` is
+   picked from whichever row across all copies is closest to the focus
+   line — since copies share chapter indices, the result is a single
+   chapter index regardless of which copy contains the closest row.
 5. Click → `gsap.to(container, { scrollTop: targetScrollTop, duration:
    0.5, ease: 'power2.inOut' })` followed by `navigate('/chapter/:slug')`.
 6. **Auto-scroll on idle.** When the user issues `wheel`, `touchmove`, or
@@ -203,9 +249,12 @@ The defining motion of the site. Implementation:
    decoration. Color paints in a binary flip (`var(--color-ink)` or
    `var(--color-ghost)`) instead of interpolating.
 
-The container's spacers still serve their original purpose: they let the
-first and last chapters of copy 0 scroll up to the focus line without
-exposing empty rows.
+**Auto-scroll start race (v2.1 fix).** The auto-scroll kickoff effect
+retries on a 100 ms timer (up to ~3 s) until `measureCopyHeight()`
+returns a non-zero value. On mobile the chapter column sometimes lays
+out a frame later than `requestAnimationFrame` fires, so the original
+single-shot kickoff would find `copyHeight = 0`, bail, and never start
+the drift.
 
 **Auto-scroll tunables (in `tokens.css`):**
 - `--chapter-autoscroll-speed` — px/sec drift speed. Read by the JS at
@@ -213,13 +262,16 @@ exposing empty rows.
 - `--chapter-autoscroll-idle-ms` — idle threshold before auto-scroll
   engages. Default 500 ms.
 
-**Component file structure (v2 polish):**
+**Component file structure (v2.1):**
 - `<div className="chapter-column">` — the scrollable container
-  - `<div className="chapter-column__spacer">` — top spacer (50% height)
-  - `<div className="chapter-column__lists">` — the wrap containing both copies
-    - `<ul className="chapter-column__list">` — copy 0 (canonical, ARIA-visible)
-    - `<ul className="chapter-column__list" aria-hidden>` — copy 1 (duplicate for wrap)
-  - `<div className="chapter-column__spacer">` — bottom spacer (50% height)
+  - `<div className="chapter-column__lists">` — flex column wrapper
+    - 5 × `<ul className="chapter-column__list">` — identical copies
+      (copy 0 is ARIA-visible; copies 1–4 are `aria-hidden`). Copies are
+      rendered via `Array.from({ length: itemRefs.current.length })` so
+      the count is data-driven from `itemRefs`.
+
+The original v2 spacers were removed — the multi-copy wrap removes the
+need to pad the top/bottom of copy 0 specifically.
 
 ### Hook ordering
 ```
@@ -256,34 +308,59 @@ from a preceding effect throws ReferenceError at runtime.
   scroll-behavior on `[data-reduced-motion="true"] *`). Mandatory to
   defeat per-element transition declarations regardless of specificity.
 
-### Modal pattern (unchanged from v1)
+### Modal pattern (v2.1: slide-up + explicit close)
 - Two pieces: a top-level mount/unmount controller in the parent
   (`ActionStack`) and the modal component itself.
 - The modal accepts: `open`, `onClose`, `triggerRef`, `prefersReducedMotion`.
 - The modal manages its own `shouldRender` local state so close
   animations finish before unmount.
-- Open uses a GSAP timeline (clip-path + opacity + scale for AboutModal,
-  scale + opacity + y for ContactModal). Close uses a separate timeline
-  with `onComplete: () => setShouldRender(false)`.
-- Focus management: both AboutModal and ContactModal trap focus inside
-  the panel via `createFocusTrap`. AboutModal initial focus is the close
-  button; ContactModal initial focus is the LinkedIn link. On close the
-  release function restores focus to the triggering button.
-- Body scroll: locked by `useBodyScrollLock(open)` only on AboutModal.
-- Esc handling: every modal uses `useEscapeKey(onClose, open)`.
-- Outside-click: ContactModal uses `useClickOutside(panelRef, onClose,
-  [triggerRef], open)` so clicking the trigger doesn't immediately
-  re-close.
+- **Open**: the panel translates from `yPercent: 100 → 0` over ~600 ms
+  (`cubic-bezier(0.22, 1, 0.36, 1)`); the backdrop crossfades opacity
+  0 → 1 over ~400 ms in parallel.
+- **Close**: panel translates `yPercent: 0 → 100` over ~450 ms with
+  `onComplete: () => setShouldRender(false)`; backdrop fades out
+  alongside with a 50 ms offset. The v1 clip-path circle reveal +
+  anchor-from-trigger logic was removed.
+- **Close UI**: an explicit `<button class="*-modal__close">` top-right
+  inside the panel. Renders `<span>Close</span> <span>×</span>`. The
+  `Close` word is hidden on mobile (`max-width: 767px`) and the `×` is
+  enlarged for a comfortable tap target.
+- **Click-to-close removed**. v1 closed on any document click; v2.1
+  closes only via the close button or Esc. (The lingering `cursor: none`
+  / "Close ×" cursor follow-the-mouse pattern has also been removed.)
+- Focus management: both modals trap focus inside the panel via
+  `createFocusTrap`. AboutModal initial focus = the close button;
+  ContactModal initial focus = the LinkedIn link. On close, focus is
+  returned to the triggering button.
+- Body scroll: locked by `useBodyScrollLock(open)` on both.
+- Esc handling: `useEscapeKey(onClose, open)`.
+- **Mobile layout** (`max-width: 767px`): both modals become full-width
+  (`left: 0`). About's portrait column is hidden entirely; its
+  internal `.about-modal__two-col` grids (Topics, Technologies,
+  Specialties, etc.) collapse to a single column; Links stack
+  vertically. Contact: top padding is increased to clear the close
+  button; Links → form gap is tightened.
 
 ### Data
 - All content lives in `src/data/topics.js`. Named export
-  `topicGroups` is the array of topic groups (locked v2 schema). Default
-  export aliases `topicGroups` for convenience. Named export `owner` holds
-  the bio and link placeholders.
-- Schema:
+  `topicGroups` is the array of topic groups. Default export aliases
+  `topicGroups` for convenience. Named export `owner` holds the bio and
+  link placeholders.
+- Schema (v2.1):
   ```js
-  { slug, label, title, body, chapters: [{ slug, name, body }] }
+  {
+    slug,           // url-safe id
+    label,          // 'RAG +' — TopicGroupRail (desktop top-left)
+    title,          // 'Retrieval Augmented Generation' — desktop hero
+    titleShort,     // optional 'RAG' — mobile topic-title list
+    body,           // string[]
+    chapters: [{ slug, name, body }],
+  }
   ```
+- `titleShort` is optional. On mobile, the topic-title list renders
+  `titleShort || title`. Labels with more than 2 words apply the
+  `--multiline` modifier class (CSS `white-space: normal`); ≤2 words
+  stay on one line.
 - Never hardcode topic content, bio text, or placeholder URLs in JSX.
 
 ## Common Mistakes to Avoid

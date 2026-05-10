@@ -22,11 +22,45 @@ See `react/CLAUDE.md` (created in Phase 2) for the coding patterns, GSAP rules, 
 
 ## Current Architecture
 
-Not built yet. The agency pipeline starts at Phase 1 (design-agent → `reviews/design-spec.md`). Phase 2 (developer-agent) scaffolds Vite + React + GSAP under `react/`.
+Built. Vite + React + GSAP project lives under `react/`. Routes: `/` (home)
+and `/chapter/:slug`. See `react/CLAUDE.md` for component patterns.
+
+## Deployment
+
+- Git repo: https://github.com/amridiculous/agami-learning
+- Hosting: Vercel (auto-deploys `main` branch). Build config lives in
+  `vercel.json` at the project root — Vercel runs `cd react && npm install
+  && npm run build` and serves `react/dist`. SPA rewrites send every path
+  to `/index.html` so `/chapter/:slug` works on hard refresh.
+- Local: `cd react && npm run dev` (port 5173).
 
 ---
 
 # Client Context — AI LEARNING WEBSITE
+
+## Version: 2.1 — Mobile pass + slide-up modals + deploy.
+
+Built atop v2. Changes since v2:
+
+- **Mobile layout** (`<1024px`): hero is a 50/50 grid — TopicTitle on the
+  left (right-aligned, stacked column of every topic group's short title),
+  ChapterColumn on the right. TopicGroupRail (top-left) is hidden on
+  mobile; the topic list serves that role. The bottom is a single
+  horizontal footer: `About +`   `Contact +`   `<year>`.
+- **Topic short forms**: each topic group can carry an optional
+  `titleShort` field (e.g. `RAG`, `Agentic Workflows`). On mobile, the
+  short form is used; labels with **>2 words** wrap to multiple lines, ≤2
+  words stay on one line.
+- **Modals**: About and Contact slide up from the bottom
+  (`yPercent: 100 → 0`, ~600 ms ease-out). Backdrop crossfades alongside.
+  Explicit `Close ×` button top-right (`×` only on mobile) — clicking the
+  backdrop no longer closes; Esc still does. About's portrait image is
+  hidden on mobile and all internal two-column grids collapse to one
+  column.
+- **ChapterColumn wheel**: bumped from 3 to 5 stacked list copies, with
+  the active chapter pre-positioned in copy 2 (the middle) and the wrap
+  range moved to `[h, 3h]`. Old behavior left mobile viewports with no
+  upward scroll room and the down-wrap unreachable on short screens.
 
 ## Version: 2.0 — REWRITE after v1 misread the reference. User supplied a second mockup with red annotations clarifying the structure. The site is NOT a 3-zone composition with marquee + ghost-stack; it is a single static composition with a scrollable chapter column.
 
