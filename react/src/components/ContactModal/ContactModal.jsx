@@ -153,43 +153,32 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
 
     if (prefersReducedMotion) {
       if (open) {
-        gsap.set(backdrop, { opacity: 1, clipPath: 'circle(150% at 50% 50%)' });
-        gsap.set(panel, { opacity: 1, scale: 1 });
+        gsap.set(backdrop, { opacity: 1, clipPath: 'none' });
+        gsap.set(panel, { opacity: 1, yPercent: 0 });
       } else {
         setShouldRender(false);
       }
       return undefined;
     }
 
-    const a = anchorRef.current;
-
     const ctx = gsap.context(() => {
+      gsap.set(backdrop, { clipPath: 'none' });
       if (open) {
-        const clipFrom = clipPathEnabled
-          ? `circle(0% at ${a.xPct}% ${a.yPct}%)`
-          : 'circle(150% at 50% 50%)';
-        const clipTo = `circle(150% at ${a.xPct}% ${a.yPct}%)`;
-
-        gsap.set(backdrop, { opacity: 0, clipPath: clipFrom });
-        gsap.set(panel, { opacity: 0, scale: 0.95 });
+        gsap.set(backdrop, { opacity: 0 });
+        gsap.set(panel, { opacity: 1, yPercent: 100 });
 
         const tl = gsap.timeline();
-        tl.to(backdrop, { opacity: 1, duration: 0.5, ease: 'cubic-bezier(0.22, 1, 0.36, 1)' }, 0)
-          .to(backdrop, { clipPath: clipTo, duration: 0.5, ease: 'cubic-bezier(0.22, 1, 0.36, 1)' }, 0)
-          .to(panel, { opacity: 1, scale: 1, duration: 0.5, ease: 'cubic-bezier(0.22, 1, 0.36, 1)' }, 0.1);
+        tl.to(backdrop, { opacity: 1, duration: 0.4, ease: 'cubic-bezier(0.22, 1, 0.36, 1)' }, 0)
+          .to(panel, { yPercent: 0, duration: 0.6, ease: 'cubic-bezier(0.22, 1, 0.36, 1)' }, 0);
       } else {
-        const clipTo = clipPathEnabled
-          ? `circle(0% at ${a.xPct}% ${a.yPct}%)`
-          : 'circle(150% at 50% 50%)';
-
         const tl = gsap.timeline({ onComplete: () => setShouldRender(false) });
-        tl.to(panel, { opacity: 0, scale: 0.95, duration: 0.3, ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)' }, 0)
-          .to(backdrop, { opacity: 0, clipPath: clipTo, duration: 0.3, ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)' }, 0);
+        tl.to(panel, { yPercent: 100, duration: 0.45, ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)' }, 0)
+          .to(backdrop, { opacity: 0, duration: 0.45, ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)' }, 0.05);
       }
     }, backdropRef);
 
     return () => ctx.revert();
-  }, [open, shouldRender, prefersReducedMotion, clipPathEnabled]);
+  }, [open, shouldRender, prefersReducedMotion]);
 
   const handleSend = useCallback((e) => {
     e.preventDefault();

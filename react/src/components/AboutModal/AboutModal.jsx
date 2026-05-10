@@ -166,70 +166,50 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
     // Reduced motion: skip animation, jump to end state on open / end on close.
     if (prefersReducedMotion) {
       if (open) {
-        gsap.set(backdrop, { opacity: 1, clipPath: 'circle(150% at 50% 50%)' });
-        gsap.set(panel, { opacity: 1, scale: 1 });
+        gsap.set(backdrop, { opacity: 1, clipPath: 'none' });
+        gsap.set(panel, { opacity: 1, yPercent: 0 });
       } else {
-        // Close instantly: unmount on next tick.
         setShouldRender(false);
       }
       return undefined;
     }
 
-    // Read the anchor live via ref at the moment the effect runs.
-    const a = anchorRef.current;
-
+    // Slide-up-from-bottom: panel translates from yPercent 100 → 0; backdrop fades.
     const ctx = gsap.context(() => {
+      gsap.set(backdrop, { clipPath: 'none' });
       if (open) {
-        const clipFrom = clipPathEnabled
-          ? `circle(0% at ${a.xPct}% ${a.yPct}%)`
-          : 'circle(150% at 50% 50%)';
-        const clipTo = `circle(150% at ${a.xPct}% ${a.yPct}%)`;
-
-        gsap.set(backdrop, { opacity: 0, clipPath: clipFrom });
-        gsap.set(panel, { opacity: 0, scale: 0.95 });
+        gsap.set(backdrop, { opacity: 0 });
+        gsap.set(panel, { opacity: 1, yPercent: 100 });
 
         const tl = gsap.timeline();
         tl.to(backdrop, {
           opacity: 1,
-          duration: 0.5,
+          duration: 0.4,
           ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
         }, 0)
-          .to(backdrop, {
-            clipPath: clipTo,
-            duration: 0.5,
-            ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          }, 0)
           .to(panel, {
-            opacity: 1,
-            scale: 1,
-            duration: 0.5,
+            yPercent: 0,
+            duration: 0.6,
             ease: 'cubic-bezier(0.22, 1, 0.36, 1)',
-          }, 0.1);
+          }, 0);
       } else {
-        const clipTo = clipPathEnabled
-          ? `circle(0% at ${a.xPct}% ${a.yPct}%)`
-          : 'circle(150% at 50% 50%)';
-
         const tl = gsap.timeline({
           onComplete: () => setShouldRender(false),
         });
         tl.to(panel, {
-          opacity: 0,
-          scale: 0.95,
-          duration: 0.3,
+          yPercent: 100,
+          duration: 0.45,
           ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)',
         }, 0).to(backdrop, {
           opacity: 0,
-          clipPath: clipTo,
-          duration: 0.3,
+          duration: 0.45,
           ease: 'cubic-bezier(0.32, 0.08, 0.24, 1)',
-        }, 0);
+        }, 0.05);
       }
     }, backdropRef);
 
     return () => ctx.revert();
-    // Anchor is intentionally NOT in the deps array (CR-3).
-  }, [open, shouldRender, prefersReducedMotion, clipPathEnabled]);
+  }, [open, shouldRender, prefersReducedMotion]);
 
   if (!shouldRender) return null;
 

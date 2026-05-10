@@ -224,11 +224,19 @@
   filter: grayscale(100%);
 }
 
-/* ── Mobile: stack vertically, portrait below content ── */
+/* ── Mobile: full-width, all sections stacked top→bottom (no side-by-side) ── */
 @media (max-width: 767px) {
+  .about-modal {
+    left: 0;
+    cursor: auto;
+  }
+
   .about-modal__panel {
     grid-template-columns: 1fr;
-    grid-template-rows: 1fr auto;
+    grid-template-rows: auto auto;
+    grid-template-areas:
+      "content"
+      "portrait";
     overflow-y: auto;
     cursor: auto;
   }
@@ -237,13 +245,27 @@
     padding: var(--page-margin-mobile);
     justify-content: flex-start;
     overflow: visible;
+    gap: var(--space-md);
+  }
+
+  /* Every internal two-column grid collapses to one column on mobile. */
+  .about-modal__two-col {
+    grid-template-columns: 1fr;
+    gap: var(--space-xs);
+  }
+
+  .about-modal__links {
+    flex-direction: column;
+    gap: var(--space-sm);
   }
 
   .about-modal__portrait {
-    height: 60vw;
+    height: auto;
+    padding: 0 var(--page-margin-mobile) var(--page-margin-mobile);
   }
 
-  .about-modal {
-    cursor: auto;
+  .about-modal__portrait-img {
+    max-height: none;
+    width: 100%;
   }
 }

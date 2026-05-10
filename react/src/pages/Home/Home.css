@@ -18,22 +18,23 @@
   width: 100%;
   padding: var(--page-margin-mobile);
   display: grid;
-  grid-template-columns: 1fr;
-  grid-template-rows: auto 1fr auto;
+  grid-template-columns: auto 1fr;
+  grid-template-rows: 1fr auto;
   grid-template-areas:
-    "top-left"
-    "hero-pair"
-    "bottom-left";
-  row-gap: var(--space-lg);
+    "title chapters"
+    "footer footer";
+  column-gap: var(--space-md);
+  row-gap: var(--space-md);
   overflow: hidden;
 }
 
 .home__top-left {
-  grid-area: top-left;
+  display: none;
 }
 
-/* ===== Wordmark (centre-top logo) ===== */
+/* ===== Wordmark (centre-top logo) — desktop only ===== */
 .home__wordmark {
+  display: none;
   position: absolute;
   top: var(--page-margin-rail-y);
   left: 50%;
@@ -57,8 +58,9 @@
   font-style: normal;
 }
 
-/* ===== Year (bottom-right marker) ===== */
+/* ===== Year (bottom-right marker) — desktop only ===== */
 .home__year {
+  display: none;
   position: absolute;
   bottom: var(--page-margin-rail-y);
   right: var(--page-margin-rail-x);
@@ -75,26 +77,44 @@
 /* Mobile: hero-pair is a stacked flex column so title + chapters flow
    vertically within their grid track. */
 .home__hero-pair {
-  grid-area: hero-pair;
-  display: flex;
-  flex-direction: column;
-  gap: var(--space-lg);
-  min-height: 0;
+  display: contents;
 }
 
 .home__title {
+  grid-area: title;
   display: flex;
   align-items: center;
+  justify-content: flex-start;
+  min-height: 0;
 }
 
 .home__chapters {
-  flex: 1;
+  grid-area: chapters;
   min-height: 0;
+  min-width: 0;
   width: 100%;
+  overflow: hidden;
 }
 
 .home__bottom-left {
-  grid-area: bottom-left;
+  grid-area: footer;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-md);
+  width: 100%;
+}
+
+.home__bottom-year {
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-label-mobile);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+  letter-spacing: var(--letter-spacing-label);
+  color: var(--color-ink);
+  user-select: none;
+  margin-left: auto;
 }
 
 /* ===== Tablet ===== */
@@ -140,6 +160,7 @@
   }
 
   .home__top-left {
+    display: block;
     position: absolute;
     top: var(--page-margin-rail-y);
     left: var(--page-margin-rail-x);
@@ -151,6 +172,24 @@
     bottom: var(--page-margin-rail-y);
     left: var(--page-margin-rail-x);
     z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    justify-content: flex-start;
+    gap: 0;
+    width: auto;
+  }
+
+  .home__bottom-year {
+    display: none;
+  }
+
+  .home__wordmark {
+    display: block;
+  }
+
+  .home__year {
+    display: block;
   }
 
   /* Hero-pair becomes display: contents so its two children become direct

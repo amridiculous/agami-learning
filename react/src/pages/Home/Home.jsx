@@ -179,6 +179,9 @@ export default function Home() {
           prefersReducedMotion={prefersReducedMotion}
           onModalChange={handleModalChange}
         />
+        <span className="home__bottom-year" aria-hidden="true">
+          {new Date().getFullYear()}
+        </span>
       </div>
     </div>
   );

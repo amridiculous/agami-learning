@@ -1,9 +1,17 @@
 .action-stack {
   display: flex;
-  flex-direction: column;
-  gap: var(--rail-label-gap);
-  max-width: var(--rail-max-width);
+  flex-direction: row;
+  gap: var(--space-md);
+  max-width: 100%;
   position: relative;
+}
+
+@media (min-width: 1024px) {
+  .action-stack {
+    flex-direction: column;
+    gap: var(--rail-label-gap);
+    max-width: var(--rail-max-width);
+  }
 }
 
 /*
