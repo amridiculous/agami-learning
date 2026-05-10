@@ -89,7 +89,7 @@ export const topicGroups = [
     slug: 'agentic-workflows',
     label: 'Agentic Workflows +',
     title: 'Agentic Workflows',
-    titleShort: 'Agents',
+    titleShort: 'Agentic Workflows',
     body: [
       'Agentic workflows are systems where a language model plans, calls tools, observes the results, and iterates toward a goal — rather than answering in a single shot. The model becomes a controller, not just a generator.',
       'Done well, agents collapse multi-step human work into a single instruction. Done poorly, they loop, hallucinate tool calls, and burn tokens. The discipline is in the scaffolding around the model.',
