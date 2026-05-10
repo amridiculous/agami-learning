@@ -17,6 +17,7 @@ export const topicGroups = [
     slug: 'rag',
     label: 'RAG +',
     title: 'Retrieval Augmented Generation',
+    titleShort: 'RAG',
     body: [
       'Retrieval Augmented Generation is the pattern where a language model is given access to an external knowledge base at inference time. Instead of relying only on its training, the model retrieves relevant chunks of text and grounds its answer in them.',
       'The result is fresher facts, fewer hallucinations, and the ability to point at exactly which source the model used. It is the most-deployed pattern for production LLM systems today.',
@@ -88,6 +89,7 @@ export const topicGroups = [
     slug: 'agentic-workflows',
     label: 'Agentic Workflows +',
     title: 'Agentic Workflows',
+    titleShort: 'Agents',
     body: [
       'Agentic workflows are systems where a language model plans, calls tools, observes the results, and iterates toward a goal — rather than answering in a single shot. The model becomes a controller, not just a generator.',
       'Done well, agents collapse multi-step human work into a single instruction. Done poorly, they loop, hallucinate tool calls, and burn tokens. The discipline is in the scaffolding around the model.',

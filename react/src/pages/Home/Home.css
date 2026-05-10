@@ -18,7 +18,7 @@
   width: 100%;
   padding: var(--page-margin-mobile);
   display: grid;
-  grid-template-columns: auto 1fr;
+  grid-template-columns: 1fr 1fr;
   grid-template-rows: 1fr auto;
   grid-template-areas:
     "title chapters"
@@ -32,11 +32,10 @@
   display: none;
 }
 
-/* ===== Wordmark (centre-top logo) — desktop only ===== */
+/* ===== Wordmark (centre-top logo) ===== */
 .home__wordmark {
-  display: none;
   position: absolute;
-  top: var(--page-margin-rail-y);
+  top: var(--page-margin-mobile);
   left: 50%;
   transform: translateX(-50%);
   z-index: 2;
@@ -84,8 +83,14 @@
   grid-area: title;
   display: flex;
   align-items: center;
-  justify-content: flex-start;
+  justify-content: flex-end;
+  text-align: right;
   min-height: 0;
+  min-width: 0;
+}
+
+.home__title .topic-title {
+  text-align: right;
 }
 
 .home__chapters {

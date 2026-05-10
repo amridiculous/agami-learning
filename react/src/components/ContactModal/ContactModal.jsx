@@ -25,7 +25,6 @@ const OWNER_EMAIL = 'amritcompaq09@gmail.com';
 export default function ContactModal({ open, onClose, triggerRef, prefersReducedMotion = false }) {
   const backdropRef = useRef(null);
   const panelRef = useRef(null);
-  const cursorLabelRef = useRef(null);
   const releaseTrapRef = useRef(null);
   const firstFocusRef = useRef(null);
   const textareaRef = useRef(null);
@@ -83,51 +82,7 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
   const handleEsc = useCallback(() => onClose(), [onClose]);
   useEscapeKey(handleEsc, open);
 
-  // Cursor label follows pointer; parks off-screen on mouseleave. Also hides
-  // when the pointer is over an interactive element (link, button, textarea,
-  // input) — in those zones the native cursor takes over.
-  const handleMouseMove = useCallback((e) => {
-    if (!cursorLabelRef.current) return;
-    const t = e.target;
-    const overInteractive = t && t.closest && t.closest('a, button, input, textarea, label');
-    if (overInteractive) {
-      cursorLabelRef.current.style.left = '-9999px';
-      cursorLabelRef.current.style.top = '-9999px';
-      return;
-    }
-    cursorLabelRef.current.style.left = `${e.clientX}px`;
-    cursorLabelRef.current.style.top = `${e.clientY}px`;
-  }, []);
-  const handleMouseLeave = useCallback(() => {
-    if (!cursorLabelRef.current) return;
-    cursorLabelRef.current.style.left = '-9999px';
-    cursorLabelRef.current.style.top = '-9999px';
-  }, []);
-
-  useEffect(() => {
-    if (!shouldRender) return undefined;
-    const backdrop = backdropRef.current;
-    if (!backdrop) return undefined;
-    backdrop.addEventListener('mousemove', handleMouseMove);
-    backdrop.addEventListener('mouseleave', handleMouseLeave);
-    return () => {
-      backdrop.removeEventListener('mousemove', handleMouseMove);
-      backdrop.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [shouldRender, handleMouseMove, handleMouseLeave]);
-
-  // Document-level click closes the modal (mirrors About).
-  useEffect(() => {
-    if (!open) return undefined;
-    const onDocClick = () => onClose();
-    const id = window.setTimeout(() => {
-      document.addEventListener('click', onDocClick);
-    }, 0);
-    return () => {
-      window.clearTimeout(id);
-      document.removeEventListener('click', onDocClick);
-    };
-  }, [open, onClose]);
+  // Close is driven by the explicit close button + Esc only. No click-to-close.
 
   useEffect(() => {
     if (!open) return undefined;
@@ -195,17 +150,8 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
     <div
       ref={backdropRef}
       className="contact-modal"
-      onClick={() => onClose()}
       role="presentation"
     >
-      <div
-        ref={cursorLabelRef}
-        className="contact-modal__cursor-label"
-        aria-hidden="true"
-      >
-        Close ×
-      </div>
-
       <div
         ref={panelRef}
         className="contact-modal__panel"
@@ -213,8 +159,16 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
         role="dialog"
         aria-modal="true"
         aria-labelledby="contact-modal-title"
-        onClick={(e) => e.stopPropagation()}
       >
+        <button
+          type="button"
+          className="contact-modal__close"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <span className="contact-modal__close-word">Close</span>
+          <span className="contact-modal__close-x" aria-hidden="true">×</span>
+        </button>
         {/* Left column — links */}
         <div className="contact-modal__content">
           <h2 id="contact-modal-title" className="contact-modal__title">Contact</h2>

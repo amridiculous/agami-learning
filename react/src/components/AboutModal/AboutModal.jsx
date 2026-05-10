@@ -21,7 +21,6 @@ import './AboutModal.css';
 export default function AboutModal({ open, onClose, triggerRef, prefersReducedMotion = false }) {
   const backdropRef = useRef(null);
   const panelRef = useRef(null);
-  const cursorLabelRef = useRef(null);
   const releaseTrapRef = useRef(null);
   // First focusable element inside the panel — used as initial focus target.
   const firstFocusRef = useRef(null);
@@ -86,59 +85,7 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
   const handleEsc = useCallback(() => onClose(), [onClose]);
   useEscapeKey(handleEsc, open);
 
-  // Any click anywhere on the modal closes it.
-  const handleBackdropClick = useCallback(() => onClose(), [onClose]);
-
-  // Custom cursor label follows the mouse over the backdrop. Hidden when the
-  // pointer leaves the backdrop (mouseleave parks it off-screen).
-  const handleMouseMove = useCallback((e) => {
-    if (!cursorLabelRef.current) return;
-    const t = e.target;
-    const overInteractive = t && t.closest && t.closest('a, button, input, textarea, label');
-    if (overInteractive) {
-      cursorLabelRef.current.style.left = '-9999px';
-      cursorLabelRef.current.style.top = '-9999px';
-      return;
-    }
-    cursorLabelRef.current.style.left = `${e.clientX}px`;
-    cursorLabelRef.current.style.top = `${e.clientY}px`;
-  }, []);
-
-  const handleMouseLeave = useCallback(() => {
-    if (!cursorLabelRef.current) return;
-    cursorLabelRef.current.style.left = '-9999px';
-    cursorLabelRef.current.style.top = '-9999px';
-  }, []);
-
-  // Wire up the mousemove + mouseleave listeners only while the modal is rendered.
-  useEffect(() => {
-    if (!shouldRender) return undefined;
-    const backdrop = backdropRef.current;
-    if (!backdrop) return undefined;
-    backdrop.addEventListener('mousemove', handleMouseMove);
-    backdrop.addEventListener('mouseleave', handleMouseLeave);
-    return () => {
-      backdrop.removeEventListener('mousemove', handleMouseMove);
-      backdrop.removeEventListener('mouseleave', handleMouseLeave);
-    };
-  }, [shouldRender, handleMouseMove, handleMouseLeave]);
-
-  // Document-level click: clicking ANYWHERE on the page closes the modal —
-  // including the strip to the left of the modal (0..18vw) that the backdrop
-  // does not cover. Links inside the panel call stopPropagation so this
-  // listener doesn't fire on them.
-  useEffect(() => {
-    if (!open) return undefined;
-    const onDocClick = () => onClose();
-    // Defer one tick so the click that opened the modal doesn't immediately close it.
-    const id = window.setTimeout(() => {
-      document.addEventListener('click', onDocClick);
-    }, 0);
-    return () => {
-      window.clearTimeout(id);
-      document.removeEventListener('click', onDocClick);
-    };
-  }, [open, onClose]);
+  // Close is driven by the explicit close button + Esc only. No click-to-close.
 
   // Focus trap activation/release synced with the open state.
   useEffect(() => {
@@ -217,18 +164,8 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
     <div
       ref={backdropRef}
       className="about-modal"
-      onClick={handleBackdropClick}
       role="presentation"
     >
-      {/* Custom cursor label — follows the mouse, hidden on touch devices via CSS */}
-      <div
-        ref={cursorLabelRef}
-        className="about-modal__cursor-label"
-        aria-hidden="true"
-      >
-        Close ×
-      </div>
-
       <div
         ref={panelRef}
         className="about-modal__panel"
@@ -237,6 +174,16 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
         aria-modal="true"
         aria-labelledby="about-modal-title"
       >
+        <button
+          ref={firstFocusRef}
+          type="button"
+          className="about-modal__close"
+          aria-label="Close"
+          onClick={onClose}
+        >
+          <span className="about-modal__close-word">Close</span>
+          <span className="about-modal__close-x" aria-hidden="true">×</span>
+        </button>
         {/* Left column — structured content */}
         <div className="about-modal__content">
           <h2 id="about-modal-title" className="about-modal__title">About</h2>
@@ -327,7 +274,6 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
             <ul className="about-modal__links">
               <li>
                 <a
-                  ref={firstFocusRef}
                   className="about-modal__link"
                   href={owner.links.linkedin}
                   target="_blank"

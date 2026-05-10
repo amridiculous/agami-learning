@@ -1,16 +1,58 @@
 .topic-title {
   font-family: var(--font-display);
-  /* v2 polish: reduced from --font-weight-medium (500) to --font-weight-display
-     (400) to match the reference image's regular-weight serif. Emphasis on the
-     focused chapter is delivered by color only, never weight. */
   font-weight: var(--font-weight-display);
   font-size: var(--font-size-display);
   line-height: var(--line-height-display);
   letter-spacing: var(--letter-spacing-display);
   color: var(--color-ink);
   margin: 0;
-  /* Aligns with the chapter column's focus row, which is centered vertically
-     by the parent grid cell. */
-  text-align: left;
-  white-space: nowrap;
+}
+
+/* Mobile-first: hide the long single-line title; show stacked list. */
+.topic-title__long {
+  display: none;
+}
+
+.topic-title__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-xs);
+  text-align: right;
+}
+
+.topic-title__list-item {
+  width: 100%;
+}
+
+.topic-title__list-button {
+  font: inherit;
+  color: var(--color-ghost);
+  background: transparent;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  text-align: right;
+  width: 100%;
+  white-space: normal;
+  word-break: break-word;
+  transition: color var(--duration-fast) var(--ease-standard);
+}
+
+.topic-title__list-item--active .topic-title__list-button {
+  color: var(--color-ink);
+}
+
+/* Desktop: show the long single-line title; hide the stacked list. */
+@media (min-width: 1024px) {
+  .topic-title__long {
+    display: inline;
+    white-space: nowrap;
+  }
+  .topic-title__list {
+    display: none;
+  }
 }

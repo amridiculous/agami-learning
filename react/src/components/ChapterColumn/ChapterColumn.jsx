@@ -345,17 +345,41 @@ export default function ChapterColumn({
     if (!Number.isNaN(wm) && wm > 0) tokensRef.current.wheelMultiplier = wm;
   }, []);
 
-  // Kick off the auto-scroll loop on mount (no user interaction required).
-  // Defer one frame so copyHeight has been measured.
+  // Kick off the auto-scroll loop on mount. Retry until copyHeight is
+  // measurable — on mobile the container can lay out a frame later than the
+  // initial rAF, so a single-shot attempt sometimes finds copyHeight = 0 and
+  // bails without ever starting the drift.
   useEffect(() => {
     if (prefersReducedMotion) return undefined;
-    const id = requestAnimationFrame(() => {
-      // Default direction: drift down.
-      lastDirectionRef.current = 1;
-      startAutoScroll();
-    });
-    return () => cancelAnimationFrame(id);
-  }, [prefersReducedMotion, startAutoScroll]);
+    let cancelled = false;
+    let rafId = null;
+    let timeoutId = null;
+    let attempts = 0;
+
+    const tryStart = () => {
+      if (cancelled) return;
+      const h = measureCopyHeight();
+      if (h > 0) {
+        lastDirectionRef.current = 1;
+        startAutoScroll();
+        return;
+      }
+      attempts += 1;
+      if (attempts < 30) {
+        timeoutId = window.setTimeout(() => {
+          rafId = requestAnimationFrame(tryStart);
+        }, 100);
+      }
+    };
+
+    rafId = requestAnimationFrame(tryStart);
+
+    return () => {
+      cancelled = true;
+      if (rafId != null) cancelAnimationFrame(rafId);
+      if (timeoutId != null) clearTimeout(timeoutId);
+    };
+  }, [prefersReducedMotion, startAutoScroll, measureCopyHeight]);
 
   // Keep activeIndexRef in sync.
   useEffect(() => {

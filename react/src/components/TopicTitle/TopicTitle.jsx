@@ -1,15 +1,47 @@
 import './TopicTitle.css';
 
 /**
- * TopicTitle — center-left big serif word (e.g. `RAG`).
+ * TopicTitle — the left side of the hero pair.
  *
- * Sits at the focus line vertical position. No animation, no cycling.
- * Just renders the active topic group's `title` string.
+ * Desktop: shows the active group's full `title` (e.g. "Retrieval Augmented
+ * Generation") on one line.
+ * Mobile: shows a stacked column of every group's `titleShort` (falling back
+ * to `title`). The active group is rendered in ink; the rest are ghost.
+ * Tapping a row activates that group.
  */
-export default function TopicTitle({ title }) {
+export default function TopicTitle({
+  title,
+  groups = [],
+  activeSlug,
+  onSelect,
+}) {
   return (
     <h2 className="topic-title" data-anim="title">
-      {title}
+      <span className="topic-title__long">{title}</span>
+      <ul className="topic-title__list" aria-label="Topics">
+        {groups.map((g) => {
+          const isActive = g.slug === activeSlug;
+          return (
+            <li
+              key={g.slug}
+              className={
+                `topic-title__list-item${
+                  isActive ? ' topic-title__list-item--active' : ''
+                }`
+              }
+            >
+              <button
+                type="button"
+                className="topic-title__list-button"
+                aria-pressed={isActive}
+                onClick={() => onSelect && onSelect(g.slug)}
+              >
+                {g.titleShort || g.title}
+              </button>
+            </li>
+          );
+        })}
+      </ul>
     </h2>
   );
 }

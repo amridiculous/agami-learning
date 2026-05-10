@@ -155,7 +155,12 @@ export default function Home() {
 
       <div className="home__hero-pair" ref={heroRef}>
         <div className="home__title">
-          <TopicTitle title={activeGroup.title} />
+          <TopicTitle
+            title={activeGroup.title}
+            groups={topicGroups}
+            activeSlug={activeGroup.slug}
+            onSelect={handleGroupSelect}
+          />
         </div>
 
         <div className="home__chapters">

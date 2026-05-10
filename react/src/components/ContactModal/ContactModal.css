@@ -12,8 +12,40 @@
   left: 18vw;
   z-index: 100;
   background-color: var(--color-bg);
-  will-change: clip-path, opacity;
-  cursor: none;
+  will-change: opacity;
+}
+
+.contact-modal__panel {
+  position: relative;
+}
+
+.contact-modal__close {
+  position: absolute;
+  top: var(--page-margin-rail-y);
+  right: var(--page-margin-rail-x);
+  z-index: 10;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-label-desktop);
+  font-weight: var(--font-weight-medium);
+  letter-spacing: var(--letter-spacing-label);
+  line-height: var(--line-height-label);
+  color: var(--color-ink);
+  background: transparent;
+  border: 0;
+  padding: 4px 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.contact-modal__close-x {
+  font-size: 1.4em;
+  line-height: 1;
+}
+
+.contact-modal__close:hover {
+  color: var(--color-ink-soft);
 }
 
 .contact-modal__cursor-label {
@@ -220,8 +252,28 @@
     cursor: auto;
   }
 
-  .contact-modal__content,
+  .contact-modal__content {
+    padding: calc(var(--page-margin-mobile) * 2.5)
+             var(--page-margin-mobile)
+             var(--space-sm);
+    justify-content: flex-start;
+    gap: var(--space-sm);
+  }
+
   .contact-modal__form {
-    padding: var(--page-margin-mobile);
+    padding: 0 var(--page-margin-mobile) var(--page-margin-mobile);
+  }
+
+  .contact-modal__close {
+    top: var(--page-margin-mobile);
+    right: var(--page-margin-mobile);
+  }
+
+  .contact-modal__close-word {
+    display: none;
+  }
+
+  .contact-modal__close-x {
+    font-size: 1.8em;
   }
 }
