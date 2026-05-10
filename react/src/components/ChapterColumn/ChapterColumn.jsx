@@ -49,14 +49,14 @@ export default function ChapterColumn({
   prefersReducedMotion = false,
 }) {
   const containerRef = useRef(null);
-  // itemRefs is a 2D array: itemRefs.current[copyIndex][chapterIndex]. Copy 0
-  // is the "primary" copy whose indices are used for activeIndex; copies 1
-  // and 2 are duplicates that let us wrap. Three copies are needed because
-  // the seamless wrap requires scrollHeight >= copyHeight + clientHeight —
-  // with only two copies and copyHeight < clientHeight, the browser's native
-  // scroll limit is hit before the wrap can fire.
-  const itemRefs = useRef([[], [], []]);
-  const copyRefs = useRef([null, null, null]);
+  // NUM_COPIES identical list copies stacked vertically. Five copies are
+  // needed so that on short viewports (mobile) the user always has at least
+  // one full copy of scroll room above AND below the initial position
+  // before the native scroll limit is reached. Three copies only allowed
+  // downward scroll on mobile — the upward direction immediately hit
+  // scrollTop = 0 and could not wrap.
+  const itemRefs = useRef(Array.from({ length: 5 }, () => []));
+  const copyRefs = useRef(Array.from({ length: 5 }, () => null));
 
   const rafRef = useRef(null);
   const snapTweenRef = useRef(null);
@@ -103,9 +103,9 @@ export default function ChapterColumn({
   }, []);
 
   // Calculate the scrollTop value that puts a given chapter index on the focus
-  // line (vertical center of the container). Uses copy 0. Result is wrapped
-  // into the canonical [0, copyHeight) range so the wrap math stays seamless
-  // even when copy 0's chapter 0 would otherwise land at a negative scrollTop.
+  // line (vertical center of the container). The canonical scroll position
+  // lives in COPY 2 (the middle copy of five) so the user has 2h of scroll
+  // room in each direction before reaching the native scroll limit.
   const scrollTopForIndex = useCallback((index) => {
     const container = containerRef.current;
     const item = itemRefs.current[0]?.[index];
@@ -116,7 +116,8 @@ export default function ChapterColumn({
     const raw = itemTopWithinContent - (containerHeight / 2) + (itemHeight / 2);
     const h = copyHeightRef.current;
     if (!h) return raw;
-    return ((raw % h) + h) % h;
+    const wrapped = ((raw % h) + h) % h;
+    return wrapped + 2 * h;
   }, []);
 
   // Imperatively scroll a chapter to the focus line. Smooth tween via GSAP
@@ -163,7 +164,7 @@ export default function ChapterColumn({
     let closestIndex = 0;
     let closestDistance = Infinity;
 
-    for (let copy = 0; copy < 3; copy += 1) {
+    for (let copy = 0; copy < itemRefs.current.length; copy += 1) {
       const rows = itemRefs.current[copy];
       if (!rows) continue;
       for (let i = 0; i < rows.length; i += 1) {
@@ -187,7 +188,10 @@ export default function ChapterColumn({
           item.style.color = `rgb(${r}, ${g}, ${b})`;
         }
 
-        if (copy === 0 && distance < closestDistance) {
+        // All copies share the same chapter indices, so whichever row is
+        // closest to the focus line gives us the active chapter index for
+        // ARIA / activeIndex tracking.
+        if (distance < closestDistance) {
           closestDistance = distance;
           closestIndex = i;
         }
@@ -197,13 +201,11 @@ export default function ChapterColumn({
     setActiveIndex((prev) => (prev === closestIndex ? prev : closestIndex));
   }, [prefersReducedMotion]);
 
-  // Wrap scrollTop when it crosses the boundary between copy 0 and copy 1.
-  // The list contains two identical copies stacked vertically. We treat the
-  // "canonical" scroll range as [0, copyHeight); whenever scrollTop falls
-  // outside that range we add or subtract one copyHeight to bring it back.
-  //
-  // This keeps an infinite-cycle illusion. When the user (or the auto-scroll
-  // tween) reaches the end of copy 1, we instantly snap back into copy 0.
+  // Wrap scrollTop to keep it inside the canonical range [h, 3h] — copies
+  // 1, 2 and 3 of the five stacked copies. When the user (or the auto-scroll
+  // tween) scrolls into copy 0 or copy 4, we instantly add or subtract one
+  // copyHeight to bring scrollTop back into the canonical range. The wrap is
+  // invisible because the copies are pixel-identical.
   const wrapScrollIfNeeded = useCallback(() => {
     const container = containerRef.current;
     if (!container) return false;
@@ -211,16 +213,11 @@ export default function ChapterColumn({
     if (!h) h = measureCopyHeight();
     if (!h) return false;
 
-    // Wrap as soon as scrollTop crosses one copy-height. With small chapter
-    // lists (12 items × ~50px ≈ 600px) and tall viewports (~900px), waiting
-    // for scrollTop >= 2h means the wrap never fires — the chapter wheel
-    // reads as having a hard end. Wrapping at h guarantees a seamless loop
-    // because copy 1 is pixel-identical to copy 0.
-    if (container.scrollTop >= h) {
+    if (container.scrollTop >= 3 * h) {
       container.scrollTop -= h;
       return true;
     }
-    if (container.scrollTop < 0) {
+    if (container.scrollTop < h) {
       container.scrollTop += h;
       return true;
     }
@@ -318,10 +315,10 @@ export default function ChapterColumn({
 
   // Initial setup: snap to the initial chapter, measure copy height, paint colors.
   useEffect(() => {
-    // Reset itemRefs length to current chapters length (all three copies).
-    itemRefs.current[0] = itemRefs.current[0].slice(0, chapters.length);
-    itemRefs.current[1] = itemRefs.current[1].slice(0, chapters.length);
-    itemRefs.current[2] = itemRefs.current[2].slice(0, chapters.length);
+    // Reset itemRefs length to current chapters length (all copies).
+    for (let i = 0; i < itemRefs.current.length; i += 1) {
+      itemRefs.current[i] = itemRefs.current[i].slice(0, chapters.length);
+    }
     // Defer to next frame so layout has settled (fonts, etc.).
     const id = requestAnimationFrame(() => {
       measureCopyHeight();
@@ -587,86 +584,44 @@ export default function ChapterColumn({
           into the canonical [0, copyHeight) range. */}
 
       <div className="chapter-column__lists">
-        {/* Copy 0 — the primary list. Used for activeIndex tracking and ARIA. */}
-        <ul
-          ref={(el) => { copyRefs.current[0] = el; }}
-          className="chapter-column__list"
-        >
-          {chapters.map((chapter, i) => (
-            <li
-              key={`copy0-${chapter.slug}`}
-              ref={(el) => { itemRefs.current[0][i] = el; }}
-              id={`chapter-row-${chapter.slug}`}
-              role="option"
-              aria-selected={i === activeIndex}
-              className={
-                `chapter-column__item${
-                  i === activeIndex ? ' chapter-column__item--focus' : ''
-                }`
-              }
-            >
-              <button
-                type="button"
-                className="chapter-column__button"
-                onClick={() => handleChapterClick(i)}
-                tabIndex={-1}
+        {Array.from({ length: itemRefs.current.length }, (_, copyIdx) => (
+          <ul
+            key={`copy-${copyIdx}`}
+            ref={(el) => { copyRefs.current[copyIdx] = el; }}
+            className="chapter-column__list"
+            aria-hidden={copyIdx === 0 ? undefined : 'true'}
+          >
+            {chapters.map((chapter, i) => (
+              <li
+                key={`copy${copyIdx}-${chapter.slug}`}
+                ref={(el) => { itemRefs.current[copyIdx][i] = el; }}
+                {...(copyIdx === 0
+                  ? {
+                      id: `chapter-row-${chapter.slug}`,
+                      role: 'option',
+                      'aria-selected': i === activeIndex,
+                    }
+                  : {})}
+                className={
+                  `chapter-column__item${
+                    copyIdx === 0 && i === activeIndex
+                      ? ' chapter-column__item--focus'
+                      : ''
+                  }`
+                }
               >
-                {`${i + 1}. ${chapter.name}`}
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        {/* Copy 1 — duplicate for wrap. aria-hidden because copy 0 already
-            announces the chapter list. */}
-        <ul
-          ref={(el) => { copyRefs.current[1] = el; }}
-          className="chapter-column__list"
-          aria-hidden="true"
-        >
-          {chapters.map((chapter, i) => (
-            <li
-              key={`copy1-${chapter.slug}`}
-              ref={(el) => { itemRefs.current[1][i] = el; }}
-              className="chapter-column__item"
-            >
-              <button
-                type="button"
-                className="chapter-column__button"
-                onClick={() => handleChapterClick(i)}
-                tabIndex={-1}
-              >
-                {`${i + 1}. ${chapter.name}`}
-              </button>
-            </li>
-          ))}
-        </ul>
-
-        {/* Copy 2 — second duplicate. Needed so total scrollHeight exceeds
-            (copyHeight + clientHeight); without it the browser's native scroll
-            limit is reached before the wrap can fire. */}
-        <ul
-          ref={(el) => { copyRefs.current[2] = el; }}
-          className="chapter-column__list"
-          aria-hidden="true"
-        >
-          {chapters.map((chapter, i) => (
-            <li
-              key={`copy2-${chapter.slug}`}
-              ref={(el) => { itemRefs.current[2][i] = el; }}
-              className="chapter-column__item"
-            >
-              <button
-                type="button"
-                className="chapter-column__button"
-                onClick={() => handleChapterClick(i)}
-                tabIndex={-1}
-              >
-                {`${i + 1}. ${chapter.name}`}
-              </button>
-            </li>
-          ))}
-        </ul>
+                <button
+                  type="button"
+                  className="chapter-column__button"
+                  onClick={() => handleChapterClick(i)}
+                  tabIndex={-1}
+                >
+                  {`${i + 1}. ${chapter.name}`}
+                </button>
+              </li>
+            ))}
+          </ul>
+        ))}
       </div>
 
     </div>
