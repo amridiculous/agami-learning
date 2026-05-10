@@ -1,0 +1,220 @@
+/*
+ * Home.css — single-viewport composition.
+ *
+ * Fix 1: the hero pair (TopicTitle + ChapterColumn) is wrapped in a single
+ * .home__hero-pair div that is absolutely centered on the viewport via
+ * translate(-50%, -50%). The two children are flex items (row, centered).
+ * This ensures the pair reads as one centered composition regardless of the
+ * relative widths of the title and chapter column.
+ *
+ * Mobile-first stays a stacked single-column flow (rails on top, title +
+ * chapters stacked, action stack at the bottom). The viewport-centered
+ * absolute layout only kicks in at the desktop breakpoint.
+ */
+
+.home {
+  position: relative;
+  height: 100vh;
+  width: 100%;
+  padding: var(--page-margin-mobile);
+  display: grid;
+  grid-template-columns: 1fr;
+  grid-template-rows: auto 1fr auto;
+  grid-template-areas:
+    "top-left"
+    "hero-pair"
+    "bottom-left";
+  row-gap: var(--space-lg);
+  overflow: hidden;
+}
+
+.home__top-left {
+  grid-area: top-left;
+}
+
+/* ===== Wordmark (centre-top logo) ===== */
+.home__wordmark {
+  position: absolute;
+  top: var(--page-margin-rail-y);
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2;
+  font-family: 'Playfair Display', Georgia, serif;
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  line-height: 1;
+  user-select: none;
+}
+
+.home__wordmark-ink {
+  color: var(--color-ink);
+  font-style: italic;
+}
+
+.home__wordmark-grey {
+  color: var(--color-text-muted);
+  font-style: normal;
+}
+
+/* ===== Year (bottom-right marker) ===== */
+.home__year {
+  position: absolute;
+  bottom: var(--page-margin-rail-y);
+  right: var(--page-margin-rail-x);
+  z-index: 2;
+  font-family: var(--font-family-sans);
+  font-size: var(--font-size-label-desktop);
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-label);
+  letter-spacing: var(--letter-spacing-label);
+  color: var(--color-ink);
+  user-select: none;
+}
+
+/* Mobile: hero-pair is a stacked flex column so title + chapters flow
+   vertically within their grid track. */
+.home__hero-pair {
+  grid-area: hero-pair;
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+  min-height: 0;
+}
+
+.home__title {
+  display: flex;
+  align-items: center;
+}
+
+.home__chapters {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+}
+
+.home__bottom-left {
+  grid-area: bottom-left;
+}
+
+/* ===== Tablet ===== */
+@media (min-width: 768px) {
+  .home {
+    padding: var(--page-margin-tablet);
+  }
+}
+
+/* ===== Desktop — viewport-centered hero pair ===== */
+@media (min-width: 1024px) {
+  /*
+   * Desktop layout: rails are absolutely pinned to the viewport edges.
+   * The hero pair (.home__hero-pair) is a single absolutely-centered block:
+   *   position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%)
+   * Its children (TopicTitle + ChapterColumn) are a flex row with the hero-pair
+   * gap between them. This ensures the composition is centered as a unit, not
+   * anchored to two separate 50% points.
+   */
+  /*
+   * Desktop: .home becomes a flex container that centers the hero pair.
+   * Rails are absolutely positioned over it. Hero pair is a normal flex child
+   * — no absolute positioning, so justify-content: center is authoritative.
+   */
+  /*
+   * Desktop: split the viewport into two equal halves.
+   * Left half: TopicTitle, right-aligned against the vertical centerline.
+   * Right half: ChapterColumn, left-aligned against the vertical centerline.
+   * Long chapter names overflow to the right edge of the viewport (clipped/faded).
+   * Rails are absolutely positioned overlays.
+   */
+  .home {
+    /* Asymmetric right padding shifts the grid centerline 5vw to the left,
+       reducing the gap between the left rail and the hero topic title. */
+    padding: 0 10vw 0 0;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: 1fr;
+    grid-template-areas: "hero-left hero-right";
+    align-items: center;
+    row-gap: 0;
+    column-gap: var(--hero-pair-gap);
+  }
+
+  .home__top-left {
+    position: absolute;
+    top: var(--page-margin-rail-y);
+    left: var(--page-margin-rail-x);
+    z-index: 2;
+  }
+
+  .home__bottom-left {
+    position: absolute;
+    bottom: var(--page-margin-rail-y);
+    left: var(--page-margin-rail-x);
+    z-index: 2;
+  }
+
+  /* Hero-pair becomes display: contents so its two children become direct
+     grid items of .home and land in the two halves. */
+  .home__hero-pair {
+    display: contents;
+  }
+
+  /* Left half: topic title, right-aligned against the centerline. */
+  .home__title {
+    grid-area: hero-left;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    height: 100vh;
+  }
+
+  /* Right half: chapter column, left-aligned against the centerline.
+     Two fade masks intersected: chapters fade out as they approach (a) the
+     right viewport edge and (b) the top of the viewport (where the Agami
+     wordmark sits) — and symmetrically at the bottom for balance. */
+  .home__chapters {
+    grid-area: hero-right;
+    align-self: stretch;
+    min-width: 0;
+    min-height: 0;
+    overflow: hidden;
+    -webkit-mask-image:
+      linear-gradient(
+        to right,
+        black 0,
+        black calc(100% - 80px),
+        transparent 100%
+      ),
+      linear-gradient(
+        to bottom,
+        transparent 0,
+        rgba(0, 0, 0, 0.15) 80px,
+        rgba(0, 0, 0, 0.6) 160px,
+        black 240px,
+        black calc(100% - 240px),
+        rgba(0, 0, 0, 0.6) calc(100% - 160px),
+        rgba(0, 0, 0, 0.15) calc(100% - 80px),
+        transparent 100%
+      );
+    -webkit-mask-composite: source-in;
+    mask-image:
+      linear-gradient(
+        to right,
+        black 0,
+        black calc(100% - 80px),
+        transparent 100%
+      ),
+      linear-gradient(
+        to bottom,
+        transparent 0,
+        rgba(0, 0, 0, 0.15) 80px,
+        rgba(0, 0, 0, 0.6) 160px,
+        black 240px,
+        black calc(100% - 240px),
+        rgba(0, 0, 0, 0.6) calc(100% - 160px),
+        rgba(0, 0, 0, 0.15) calc(100% - 80px),
+        transparent 100%
+      );
+    mask-composite: intersect;
+  }
+}

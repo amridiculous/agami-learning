@@ -1,0 +1,180 @@
+/*
+ * tokens.css — single source of truth for design tokens (v2).
+ * Sections: color, typography, spacing, motion.
+ * No component styles in this file. Nothing but custom properties.
+ *
+ * v2 changes vs v1:
+ *   - Display family is Playfair Display (was Newsreader).
+ *   - Label family is Inter (sans). Labels look cleaner sans per spec §125.
+ *   - Display size tuned down to clamp(56px, 6vw, 80px) for the new layout.
+ *   - Removed --duration-ghost-cycle, --duration-marquee-cycle, --rail-rule-width
+ *     (chapters/marquee gone; rail rules now use 100% of their column width).
+ *   - Added --focus-line-fade-distance for ChapterColumn focus crossfade.
+ */
+
+:root {
+  /* ===== Color ===== */
+  --color-bg: #FAFAFA;            /* paper tone */
+  --color-surface: #FAFAFA;
+  --color-ink: #111111;           /* near-black for focus chapter, topic title */
+  --color-ink-soft: #2A2A2A;      /* labels at hover/active */
+  --color-text-primary: #111111;
+  --color-text-secondary: #4A4A4A;
+  --color-text-muted: #6E6E6E;
+  --color-ghost: #C7C7C7;         /* light grey for non-focus chapters */
+  --color-rule: #D8D8D8;          /* hairlines */
+  --color-border: #C7C7C7;
+  --color-accent: #111111;        /* alias kept for modal compatibility */
+  --color-accent-dark: #000000;   /* alias kept for modal compatibility */
+  --color-error: #8B2A2A;
+  --color-focus: #111111;
+  --color-backdrop: rgba(250, 250, 250, 0.78);
+  --color-portrait-placeholder: #E8E8E8;
+
+  /* ===== Typography ===== */
+  --font-display: 'Playfair Display', 'Iowan Old Style', Georgia, serif;
+  --font-label: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-family-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+  /* Backwards-compat alias so any leftover var(--font-family-serif) reference keeps working. */
+  --font-family-serif: var(--font-display);
+
+  /* Backwards-compat alias — sans family (Inter) used in AboutModal structured sections. */
+  --font-family-sans: var(--font-label);
+
+  --font-weight-regular: 400;
+  --font-weight-medium: 500;
+  --font-weight-semibold: 600;
+  --font-weight-bold: 700;
+
+  /* Display — topic title + chapter rows. v2-polish: tuned down from 56-80 to
+     36-56 to match the reference image at ~1500px viewport (chapter caps render
+     ~40-55px). Fix 4: further reduced ~30% to clamp(25px, 2.8vw, 39px).
+     Fix 2: line-height reduced from 1.7 → 1.2 for tighter chapter row spacing. */
+  --font-size-display: clamp(22px, 2.5vw, 35px);
+  --line-height-display: 1.2;
+  --letter-spacing-display: -0.01em;
+  --font-weight-display: 400;
+
+  /* Body */
+  --font-size-body-mobile: 15px;
+  --font-size-body-desktop: 16px;
+  --line-height-body: 1.55;
+
+  /* Label (sans) — top-left rail labels, About/Contact triggers */
+  --font-size-label-mobile: 12px;
+  --font-size-label-desktop: 13px;
+  --line-height-label: 1.2;
+  --letter-spacing-label: 0.02em;
+
+  /* Caption (modal links, captions inside the AboutModal) */
+  --font-size-caption-mobile: 12px;
+  --font-size-caption-desktop: 13px;
+  --line-height-caption: 1.45;
+  --letter-spacing-caption: 0.01em;
+
+  /* CTA — used by ContactModal links (kept compatible with v1 styles) */
+  --font-size-cta-mobile: 13px;
+  --font-size-cta-desktop: 14px;
+  --line-height-cta: 1.0;
+  --letter-spacing-cta: 0.02em;
+
+  /* H2 (modal titles, etc.) */
+  --font-size-h2-mobile: 20px;
+  --font-size-h2-desktop: 24px;
+  --line-height-h2: 1.3;
+
+  /* H3 */
+  --font-size-h3-mobile: 16px;
+  --font-size-h3-desktop: 18px;
+  --line-height-h3: 1.35;
+
+  /* ===== Spacing ===== */
+  --space-base: 8px;
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 40px;
+  --space-2xl: 64px;
+  --space-3xl: 96px;
+
+  --content-max-width: 1440px;
+  --page-margin-mobile: 24px;
+  --page-margin-tablet: 40px;
+  --page-margin-desktop: 64px;
+
+  /* Rails */
+  --rail-rule-height: 1px;
+  --rail-rule-gap: 4px;
+  --rail-label-gap: 8px;
+  --rail-max-width: 220px;
+
+  /* Action stack (bottom-left) */
+  --action-stack-gap: 16px;
+  --action-stack-hover-shift: 2px;
+
+  /* Body (modal) */
+  --body-max-width: 560px;
+
+  /* ===== Motion ===== */
+  --ease-standard: cubic-bezier(0.32, 0.08, 0.24, 1);
+  --ease-emphasized: cubic-bezier(0.22, 1, 0.36, 1);
+  --ease-soft: cubic-bezier(0.45, 0, 0.55, 1);
+  --ease-linear: linear;
+
+  --duration-xfast: 120ms;
+  --duration-fast: 200ms;
+  --duration-base: 400ms;
+  --duration-medium: 800ms;
+  --duration-slow: 1600ms;
+
+  /* Snap-scroll on chapter click (~500ms power2.inOut). */
+  --duration-snap-scroll: 500ms;
+
+  /* Focus ring */
+  --focus-outline-width: 2px;
+  --focus-outline-offset: 3px;
+
+  /* Component-derived pixel tokens */
+  --underline-width: 16px;
+  --underline-height: 4px;
+  --close-button-size: 32px;
+  --close-button-glyph-size: 28px;
+  --close-button-glyph-optical-y: -2px;
+  --about-modal-max-width: 960px;
+  --about-modal-grid-gap: 48px;
+  --about-modal-edge-offset-desktop: 32px;
+  --portrait-max-width: 320px;
+  --contact-modal-width: 220px;
+  --contact-modal-padding-y: 20px;
+  --contact-modal-padding-x: 24px;
+  --blur-modal: 12px;
+
+  /* ChapterColumn focus crossfade — distance (in px) from focus line over which
+     a chapter fades from --color-ink to --color-ghost. Roughly one row's
+     vertical step at the display size. */
+  --focus-line-fade-distance: 140px;
+
+  /* Hero pair gap — horizontal distance between TopicTitle's right edge and
+     ChapterColumn's left edge. Matches the reference image's small breathing
+     gap between the two. */
+  --hero-pair-gap: 24px;
+
+  /* Auto-scroll on idle (v2 polish, change #4): chapter list drifts in the
+     user's last scroll direction after ~500ms of input silence. Speed is in
+     px/sec; idle delay is in ms. */
+  --chapter-autoscroll-speed: 12;    /* px/sec, unitless for JS consumption */
+  --chapter-autoscroll-idle-ms: 1200; /* ms idle before auto-scroll re-engages */
+  --chapter-wheel-multiplier: 0.5;   /* manual wheel-scroll sensitivity (0.5 = half) */
+
+  /* Reference-matched rail positioning. The reference image places labels
+     ~80px from the viewport edges (top + left + bottom). At a 1280px-wide
+     viewport that's ~6.25% horizontal, ~7-8% vertical. */
+  --page-margin-rail-x: 5%;
+  --page-margin-rail-y: 6%;
+
+  /* Breakpoints (informational — used in media queries) */
+  --bp-tablet: 768px;
+  --bp-desktop: 1280px;
+}

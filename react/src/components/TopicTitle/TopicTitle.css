@@ -1,0 +1,16 @@
+.topic-title {
+  font-family: var(--font-display);
+  /* v2 polish: reduced from --font-weight-medium (500) to --font-weight-display
+     (400) to match the reference image's regular-weight serif. Emphasis on the
+     focused chapter is delivered by color only, never weight. */
+  font-weight: var(--font-weight-display);
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  letter-spacing: var(--letter-spacing-display);
+  color: var(--color-ink);
+  margin: 0;
+  /* Aligns with the chapter column's focus row, which is centered vertically
+     by the parent grid cell. */
+  text-align: left;
+  white-space: nowrap;
+}

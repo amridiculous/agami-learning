@@ -1,0 +1,175 @@
+/*
+ * main.css — base reset, typography defaults, utilities, focus + reduced-motion globals.
+ * Component-specific rules live in each component's own .css file.
+ * Every value in this file references a token from tokens.css.
+ */
+
+@import './tokens.css';
+
+/* ===== Reset ===== */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  /* The site is a single static viewport composition. No vertical page scroll;
+     internal scroll is handled by ChapterColumn. */
+  height: 100%;
+  overflow: hidden;
+}
+
+html {
+  font-family: var(--font-label);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+body {
+  font-family: var(--font-label);
+  font-size: var(--font-size-body-mobile);
+  line-height: var(--line-height-body);
+  color: var(--color-text-primary);
+  background-color: var(--color-bg);
+}
+
+@media (min-width: 1280px) {
+  body {
+    font-size: var(--font-size-body-desktop);
+  }
+}
+
+p {
+  margin: 0 0 var(--space-md) 0;
+}
+
+p:last-child {
+  margin-bottom: 0;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  margin: 0;
+  font-weight: var(--font-weight-medium);
+  line-height: var(--line-height-h2);
+}
+
+ul, ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+button {
+  font-family: inherit;
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  line-height: inherit;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+/* ===== Focus ring (keyboard only) ===== */
+:focus {
+  outline: none;
+}
+
+:focus-visible {
+  outline: var(--focus-outline-width) solid var(--color-focus);
+  outline-offset: var(--focus-outline-offset);
+  border-radius: 0;
+  transition: outline-color var(--duration-xfast) var(--ease-standard),
+              outline-offset var(--duration-xfast) var(--ease-standard);
+}
+
+/* ===== sr-only utility ===== */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.sr-only--focusable:focus,
+.sr-only--focusable:focus-visible {
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  width: auto;
+  height: auto;
+  padding: var(--space-sm) var(--space-md);
+  margin: 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  font-size: var(--font-size-label-desktop);
+  font-weight: var(--font-weight-medium);
+  z-index: 1000;
+}
+
+/* ===== App shell ===== */
+.app {
+  height: 100vh;
+  width: 100%;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  overflow: hidden;
+}
+
+.app__main {
+  height: 100%;
+  width: 100%;
+}
+
+/* ===== Reduced motion globals =====
+ * The useReducedMotion hook sets [data-reduced-motion="true"] on <html>.
+ * That selector disables CSS transitions everywhere.
+ * GSAP code paths short-circuit independently inside each useEffect.
+ */
+[data-reduced-motion="true"] *,
+[data-reduced-motion="true"] *::before,
+[data-reduced-motion="true"] *::after {
+  transition-duration: 0.001ms !important;
+  animation-duration: 0.001ms !important;
+  animation-iteration-count: 1 !important;
+  scroll-behavior: auto !important;
+}
+
+/*
+ * The four !important declarations above (transition-duration,
+ * animation-duration, animation-iteration-count, scroll-behavior) live on a
+ * single reduced-motion selector. They are the spec-mandated global override
+ * for prefers-reduced-motion compliance — required to defeat any nested
+ * transition declaration regardless of specificity. No component CSS uses
+ * !important.
+ */

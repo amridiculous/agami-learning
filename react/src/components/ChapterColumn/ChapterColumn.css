@@ -1,0 +1,95 @@
+.chapter-column {
+  height: 100%;
+  width: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  /* Hide scrollbars for the editorial feel; chapters' focus crossfade is the
+     scroll affordance. */
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  /*
+   * v2 polish (change #4): scroll-snap removed. The chapter list now wraps
+   * infinitely via DOM duplication + scrollTop modular arithmetic (see
+   * ChapterColumn.jsx wrapScrollIfNeeded). scroll-snap fights both the
+   * wrap-on-scroll behavior and the GSAP-driven auto-scroll tween.
+   */
+  outline: none;
+}
+
+.chapter-column::-webkit-scrollbar {
+  display: none;
+}
+
+/*
+ * Top + bottom spacers each take up half the container's height. That lets
+ * the first chapter scroll to the focus line at scrollTop=0 (well, requires
+ * a programmatic offset — see ChapterColumn.jsx) and lets the last chapter
+ * scroll to the focus line at the maximum scrollTop without exposing an empty
+ * row below.
+ */
+.chapter-column__spacer {
+  flex-shrink: 0;
+  height: 50%;
+}
+
+/*
+ * Wrapper for the two list copies. Stacked vertically — copy 0 above copy 1.
+ * The wrap helper in ChapterColumn.jsx treats copy 0's height as the
+ * canonical scroll range and snaps scrollTop back into that range whenever
+ * the visible scroll position crosses the boundary into copy 1.
+ */
+.chapter-column__lists {
+  display: flex;
+  flex-direction: column;
+}
+
+.chapter-column__list {
+  display: flex;
+  flex-direction: column;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.chapter-column__item {
+  /* color is driven by JS on every scroll frame (see ChapterColumn.jsx). */
+  color: var(--color-ghost);
+}
+
+[data-reduced-motion="true"] .chapter-column__item {
+  color: var(--color-ghost);
+}
+
+[data-reduced-motion="true"] .chapter-column__item--focus {
+  color: var(--color-ink);
+}
+
+.chapter-column__button {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-display);
+  /* v2 polish: reduced from --font-weight-medium (500) to --font-weight-display
+     (400). Focused-row emphasis is delivered by --color-ink alone (set by JS
+     on every scroll frame); the focus row does NOT gain extra weight. */
+  font-weight: var(--font-weight-display);
+  font-size: var(--font-size-display);
+  line-height: var(--line-height-display);
+  letter-spacing: var(--letter-spacing-display);
+  /* color: inherit so the JS-set rgb on the parent <li> drives every row. */
+  color: inherit;
+  background: none;
+  border: 0;
+  padding: 0;
+  margin: 0;
+  cursor: pointer;
+  /* Keep the button's text aligned with the topic title baseline. */
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: opacity var(--duration-fast) var(--ease-standard);
+}
+
+.chapter-column__button:hover {
+  opacity: 0.85;
+}

@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://[domain-tbc]/sitemap.xml
