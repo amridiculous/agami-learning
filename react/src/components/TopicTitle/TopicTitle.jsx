@@ -21,6 +21,8 @@ export default function TopicTitle({
       <ul className="topic-title__list" aria-label="Topics">
         {groups.map((g) => {
           const isActive = g.slug === activeSlug;
+          const label = g.titleShort || g.title;
+          const multiline = label.trim().split(/\s+/).length > 2;
           return (
             <li
               key={g.slug}
@@ -32,11 +34,15 @@ export default function TopicTitle({
             >
               <button
                 type="button"
-                className="topic-title__list-button"
+                className={
+                  `topic-title__list-button${
+                    multiline ? ' topic-title__list-button--multiline' : ''
+                  }`
+                }
                 aria-pressed={isActive}
                 onClick={() => onSelect && onSelect(g.slug)}
               >
-                {g.titleShort || g.title}
+                {label}
               </button>
             </li>
           );
