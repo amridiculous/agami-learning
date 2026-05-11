@@ -21,9 +21,19 @@ export default function ActionStack({ prefersReducedMotion = false, onModalChang
     if (onModalChange) onModalChange(aboutOpen || contactOpen);
   }, [aboutOpen, contactOpen, onModalChange]);
 
-  const openAbout = useCallback(() => setAboutOpen(true), []);
+  // Opening either modal dismisses the other so they swap cleanly when the
+  // user taps the opposite trigger while one is already open. The bottom-left
+  // rail sits above the modal stack via z-index (see Home.css / ActionStack.css),
+  // so the triggers remain clickable while a modal is open.
+  const openAbout = useCallback(() => {
+    setContactOpen(false);
+    setAboutOpen(true);
+  }, []);
   const closeAbout = useCallback(() => setAboutOpen(false), []);
-  const openContact = useCallback(() => setContactOpen(true), []);
+  const openContact = useCallback(() => {
+    setAboutOpen(false);
+    setContactOpen(true);
+  }, []);
   const closeContact = useCallback(() => setContactOpen(false), []);
 
   return (
