@@ -85,14 +85,29 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
   const handleEsc = useCallback(() => onClose(), [onClose]);
   useEscapeKey(handleEsc, open);
 
-  // Desktop only: clicking anywhere on the modal that isn't an interactive
-  // element (links, the close button) closes the modal. Interactive elements
-  // call e.stopPropagation() to opt out. Mobile (max-width: 767px) closes
-  // only via the explicit × button or Esc.
+  // Clicking anywhere on the modal that isn't an interactive element (links,
+  // the close button) closes it. Interactive elements call e.stopPropagation()
+  // to opt out. Works on every viewport — on mobile, tapping where the hero
+  // (topic title list, chapters) sits underneath the modal also dismisses it
+  // and reveals the hero again. Esc still closes too.
   const handleBackdropClick = useCallback(() => {
-    if (!clipPathEnabled) return;
     onClose();
-  }, [clipPathEnabled, onClose]);
+  }, [onClose]);
+
+  // Clicks ANYWHERE on the document (including the visible left rails on
+  // desktop and the bottom-left action rail on every breakpoint) also close
+  // the modal. The listener ignores clicks inside the panel — those are
+  // handled by handleBackdropClick + per-element stopPropagation so the
+  // form/links stay interactive.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (e) => {
+      if (panelRef.current && panelRef.current.contains(e.target)) return;
+      onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open, onClose]);
 
   // Focus trap activation/release synced with the open state.
   useEffect(() => {

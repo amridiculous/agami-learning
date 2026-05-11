@@ -82,14 +82,29 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
   const handleEsc = useCallback(() => onClose(), [onClose]);
   useEscapeKey(handleEsc, open);
 
-  // Desktop only: clicking anywhere on the modal that isn't an interactive
-  // element (links, the form, the close button) closes the modal. Interactive
-  // elements call e.stopPropagation() to opt out. Mobile (max-width: 767px)
-  // closes only via the explicit × button or Esc.
+  // Clicking anywhere on the modal that isn't an interactive element (links,
+  // the form, the close button) closes it. Interactive elements call
+  // e.stopPropagation() to opt out. Works on every viewport — on mobile,
+  // tapping where the hero (topic title list, chapters) sits underneath the
+  // modal also dismisses it and reveals the hero again. Esc still closes too.
   const handleBackdropClick = useCallback(() => {
-    if (!clipPathEnabled) return;
     onClose();
-  }, [clipPathEnabled, onClose]);
+  }, [onClose]);
+
+  // Clicks ANYWHERE on the document (including the visible left rails on
+  // desktop and the bottom-left action rail on every breakpoint) also close
+  // the modal. The listener ignores clicks inside the panel — those are
+  // handled by handleBackdropClick + per-element stopPropagation so the
+  // form/links stay interactive.
+  useEffect(() => {
+    if (!open) return undefined;
+    const onPointerDown = (e) => {
+      if (panelRef.current && panelRef.current.contains(e.target)) return;
+      onClose();
+    };
+    document.addEventListener('pointerdown', onPointerDown, true);
+    return () => document.removeEventListener('pointerdown', onPointerDown, true);
+  }, [open, onClose]);
 
   useEffect(() => {
     if (!open) return undefined;
@@ -212,13 +227,19 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
 
         </div>
 
-        {/* Right column — message form */}
+        {/* Right column — message form. Only the actual interactive
+            elements (labels, inputs, send button) stop click propagation.
+            Empty space inside the form lets the click bubble to the
+            backdrop and closes the modal — matching the rest of the panel. */}
         <form
           className="contact-modal__form"
           onSubmit={handleSend}
-          onClick={(e) => e.stopPropagation()}
         >
-          <label className="contact-modal__form-label" htmlFor="contact-email">
+          <label
+            className="contact-modal__form-label"
+            htmlFor="contact-email"
+            onClick={(e) => e.stopPropagation()}
+          >
             Your email
           </label>
           <input
@@ -233,7 +254,11 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
             aria-invalid={email.length > 0 && !emailValid}
           />
 
-          <label className="contact-modal__form-label" htmlFor="contact-message">
+          <label
+            className="contact-modal__form-label"
+            htmlFor="contact-message"
+            onClick={(e) => e.stopPropagation()}
+          >
             Message
           </label>
           <textarea
@@ -252,6 +277,7 @@ export default function ContactModal({ open, onClose, triggerRef, prefersReduced
             type="submit"
             className="contact-modal__send"
             disabled={!canSend}
+            onClick={(e) => e.stopPropagation()}
           >
             Send →
           </button>
