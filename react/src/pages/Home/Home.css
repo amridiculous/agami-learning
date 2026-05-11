@@ -14,7 +14,12 @@
 
 .home {
   position: relative;
+  /* 100vh on mobile browsers (Chrome Android, iOS Safari) includes the area
+     behind the URL/nav bars, which pushes the footer below the visible
+     viewport. 100dvh tracks the live visible viewport so the footer always
+     sits inside it. 100vh is the fallback for browsers without dvh support. */
   height: 100vh;
+  height: 100dvh;
   width: 100%;
   padding: var(--page-margin-mobile);
   display: grid;

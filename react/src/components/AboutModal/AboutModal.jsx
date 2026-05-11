@@ -85,7 +85,14 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
   const handleEsc = useCallback(() => onClose(), [onClose]);
   useEscapeKey(handleEsc, open);
 
-  // Close is driven by the explicit close button + Esc only. No click-to-close.
+  // Desktop only: clicking anywhere on the modal that isn't an interactive
+  // element (links, the close button) closes the modal. Interactive elements
+  // call e.stopPropagation() to opt out. Mobile (max-width: 767px) closes
+  // only via the explicit × button or Esc.
+  const handleBackdropClick = useCallback(() => {
+    if (!clipPathEnabled) return;
+    onClose();
+  }, [clipPathEnabled, onClose]);
 
   // Focus trap activation/release synced with the open state.
   useEffect(() => {
@@ -165,6 +172,7 @@ export default function AboutModal({ open, onClose, triggerRef, prefersReducedMo
       ref={backdropRef}
       className="about-modal"
       role="presentation"
+      onClick={handleBackdropClick}
     >
       <div
         ref={panelRef}
